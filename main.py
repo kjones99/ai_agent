@@ -52,6 +52,7 @@ def generate_content(client, messages, verbose_flag):
         print("Prompt tokens:", response.usage_metadata.prompt_token_count)
         print("Response tokens:", response.usage_metadata.candidates_token_count)
 
+    messages.append(type.Content(role='model', parts=[type.Part(text=response.text)]))
 
 
 
