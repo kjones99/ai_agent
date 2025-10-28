@@ -1,5 +1,21 @@
 import os
 from config import MAX_CHARS
+from google import genai
+from google.genai import types
+
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description="List the first 10000 characters in the file specified by the file path, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The filepath leading to the target file to read characters from.",
+            ),
+        },
+    ),
+)
 
 def get_file_content(working_directory, file_path):
     #create absolute filepaths for target and working directory

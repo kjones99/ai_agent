@@ -4,6 +4,10 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
+from prompts import system_prompt
+from call_function import available_functions
+from call_function import call_function
+
 def main():
     #load dotenv function which allows us to pull the API key from .env
     load_dotenv()
@@ -41,20 +45,28 @@ def generate_content(client, messages, verbose_flag):
     response = client.models.generate_content(
         model='gemini-2.0-flash-001',
         contents=messages,
+        config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),
         )
     
-    #print the LLM's response to console
-    print("Response:\n", response.text)
+    #If the response includes function calls impliment those calls and store the result
+    if response.function_calls:
+        for function_call_part in response.function_calls:
+            function_call_result = call_function(function_call_part, verbose_flag)
 
-    #if user included the verbose flag also print the # of Prompt and Response tokens the user currently has
-    if verbose_flag:
+    #If the response didn't inclue a function call just print the response       
+    else:
+        print("Response:\n", response.text)
+
+    #if there is no response from the function call raise exception
+    if not function_call_result.parts[0].function_response.response:
+        raise Exception ("Error: No response from function call")
+    
+    #if user included the verbose flag print function call results, user prompt, prompt and response tokens
+    elif verbose_flag:
+        print(f"-> {function_call_result.parts[0].function_response.response}")
         print("User prompt:", messages[-1].parts[-1].text)
         print("Prompt tokens:", response.usage_metadata.prompt_token_count)
         print("Response tokens:", response.usage_metadata.candidates_token_count)
-
-    messages.append(type.Content(role='model', parts=[type.Part(text=response.text)]))
-
-
 
 if __name__ == "__main__":
     main()
